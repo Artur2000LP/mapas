@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ASF Map Explorer - Sentinel-1</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: #f0f2f5; }
+        #sidebar { width: 400px; padding: 20px; overflow-y: auto; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
+        #map { flex-grow: 1; }
+        .card { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 8px; font-size: 12px; transition: 0.2s; }
+        .card:hover { border-color: #0071bc; background: #f0faff; }
+        h2 { color: #0071bc; font-size: 1.5rem; margin-top: 0; }
+        button { width: 100%; background: #0071bc; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
+        .badge { background: #e1f5fe; color: #01579b; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .btn-download { display: inline-block; margin-top: 5px; color: #27ae60; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>🛰️ ASF Map Explorer</h2>
+    <p>Área: <b>Guatemala</b><br><small>Coordenadas: 14.6, -90.5</small></p>
+    
+    <button onclick="buscarDatos()">🔍 Buscar y Dibujar en Mapa</button>
+    <div id="status"></div>
+    <div id="lista-resultados"></div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/wellknown@0.5.0/wellknown.js"></script>
+
+<script>
+    // 1. Inicializar el mapa centrado en Guatemala
+    const map = L.map('map').setView([14.6, -90.5], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Marcador del punto de búsqueda
+    L.marker([14.6, -90.5]).addTo(map).bindPopup("Punto de consulta").openPopup();
+
+    // Capa para los polígonos de los satélites
+    let layerGroup = L.layerGroup().addTo(map);
+
+    async function buscarDatos() {
+        const lista = document.getElementById('lista-resultados');
+        const status = document.getElementById('status');
+        
+        status.innerHTML = "Cargando...";
+        lista.innerHTML = "";
+        layerGroup.clearLayers();
+
+        // URL con output=json para obtener el "stringEntity" (el dibujo de la imagen)
+        const url = "https://api.daac.asf.alaska.edu/services/search/param?platform=SENTINEL-1&intersectsWith=POINT(-90.5 14.6)&maxResults=15&output=json";
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const resultados = Array.isArray(data[0]) ? data[0] : data;
+
+            status.innerHTML = `Se encontraron <b>${resultados.length}</b> imágenes.`;
+
+            resultados.forEach((item, index) => {
+                // 2. Dibujar el polígono en el mapa (ASF usa formato WKT)
+                if (item.stringEntity) {
+                    try {
+                        const geojsonData = wellknown.parse(item.stringEntity);
+                        const polygon = L.geoJSON(geojsonData, {
+                            style: { color: '#0071bc', weight: 2, fillOpacity: 0.1 }
+                        }).addTo(layerGroup);
+                        
+                        polygon.bindPopup(`<b>${item.fileName}</b>`);
+                    } catch(e) { console.error("Error parseando geometría", e); }
+                }
+
+                // 3. Crear la tarjeta en la barra lateral
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <b>ID:</b> ${item.fileName.substring(0, 30)}...<br>
+                    <b>Fecha:</b> ${new Date(item.startTime).toLocaleDateString()}<br>
+                    <span class="badge">${item.processingLevel}</span>
+                    <a href="${item.downloadUrl}" target="_blank" class="btn-download">📥 Descargar</a>
+                `;
+                lista.appendChild(card);
+            });
+
+        } catch (error) {
+            status.innerHTML = "❌ Error al consultar.";
+            console.error(error);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,515 @@
+/* Estilos principales */
+#map { 
+    height: 100vh; 
+    width: 100%; 
+    z-index: 1; 
+}
+
+/* Scrollbars personalizados */
+::-webkit-scrollbar { 
+    width: 6px; 
+}
+::-webkit-scrollbar-track { 
+    background: transparent; 
+}
+::-webkit-scrollbar-thumb { 
+    background: #cbd5e1; 
+    border-radius: 10px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+    background: #94a3b8; 
+}
+
+/* Loader para cargas */
+.loader {
+    border: 3px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 3px solid #6366f1;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 
+    0% { transform: rotate(0deg); } 
+    100% { transform: rotate(360deg); } 
+}
+
+/* Transiciones suaves para los acordeones */
+.provider-options {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+}
+.provider-options.open {
+    max-height: 500px;
+    opacity: 1;
+}
+.provider-header.active {
+    background-color: #f3f4f6;
+    border-left: 4px solid #6366f1;
+}
+.provider-header.active i.arrow {
+    transform: rotate(180deg);
+}
+
+/* Estilos para tabs */
+.tab-content {
+    display: block;
+}
+.tab-content.hidden {
+    display: none;
+}
+
+.tab-active {
+    background-color: white !important;
+    border-bottom-color: #6366f1 !important;
+    color: #6366f1 !important;
+}
+
+/* Estilos para archivos KML */
+.kml-file-item {
+    transition: all 0.3s ease;
+}
+.kml-file-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Toast notifications */
+.toast-notification {
+    animation: slideInRight 0.3s ease-out;
+}
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-success { 
+    background: linear-gradient(135deg, #10B981, #059669); 
+}
+.toast-error { 
+    background: linear-gradient(135deg, #EF4444, #DC2626); 
+}
+.toast-warning { 
+    background: linear-gradient(135deg, #F59E0B, #D97706); 
+}
+.toast-info { 
+    background: linear-gradient(135deg, #3B82F6, #2563EB); 
+}
+
+/* Iconos de elementos KML */
+.kml-point { color: #10B981; }
+.kml-line { color: #8B5CF6; }
+.kml-polygon { color: #F59E0B; }
+
+/* Progress bar */
+.progress-bar {
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+    background-size: 200px 100%;
+    animation: progress-shimmer 2s infinite;
+}
+@keyframes progress-shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* Animación shake para errores */
+@keyframes shake { 
+    0%, 100% { transform: translateX(0); } 
+    25% { transform: translateX(-5px); } 
+    75% { transform: translateX(5px); } 
+}
+.shake-anim { 
+    animation: shake 0.3s ease-in-out; 
+}
+
+/* Animación fadeIn para inputs dinámicos */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para inputs de credenciales dinámicos */
+.credential-input-container {
+    border-top: 2px solid;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.credential-input-container input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+}
+
+.credential-input-container button {
+    transition: all 0.2s ease;
+}
+
+.credential-input-container button:hover {
+    transform: translateY(-1px);
+}
+
+/* Custom scrollbar para modal */
+.custom-scrollbar::-webkit-scrollbar { 
+    width: 6px; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb { 
+    background-color: #cbd5e1; 
+    border-radius: 4px; 
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    #control-panel {
+        width: 100% !important;
+        left: 0 !important;
+        top: 0 !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+    
+    .provider-header {
+        padding: 3px 12px !important;
+    }
+    
+    .provider-options .p-3 {
+        padding: 2px 8px !important;
+    }
+}
+
+/* Toggle de archivos KML */
+.kml-toggle-active {
+    background-color: #f0f9ff;
+    border-color: #0ea5e9;
+}
+
+.kml-toggle-inactive {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    opacity: 0.6;
+}
+
+/* Botones de tipo KML */
+.type-button-active {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.type-button-inactive {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+/* Efectos para elementos interactivos */
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Estilos para lista de elementos KML */
+.kml-element-item {
+    transition: all 0.2s ease;
+}
+
+.kml-element-item:hover {
+    background-color: #f0f9ff;
+    border-color: #0ea5e9;
+    transform: scale(1.02);
+}
+
+/* Botón de exportación PDF */
+.export-pdf-button {
+    background: linear-gradient(135deg, #10B981, #059669);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.export-pdf-button:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+}
+
+.export-pdf-button:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.export-pdf-button:hover:before {
+    left: 100%;
+}
+
+/* Animación para generar PDF */
+@keyframes pdfGenerate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.generating-pdf {
+    animation: pdfGenerate 1s ease-in-out infinite;
+}
+
+/* Estilos para búsqueda de lugares */
+#search-results {
+    z-index: 1000;
+}
+
+#search-results button:hover {
+    background-color: #eff6ff;
+}
+
+.custom-search-marker {
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ================================
+   ESTILOS PARA MODAL DE VISTA PREVIA
+   ================================ */
+
+#preview-modal {
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: scale(0.95); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+}
+
+#preview-modal .bg-white {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+#preview-content {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Mejoras para el contenido de vista previa */
+#preview-content img {
+    transition: transform 0.3s ease;
+}
+
+#preview-content:hover img {
+    transform: scale(1.02);
+}
+
+/* Estilos para scroll personalizado en vista previa */
+#preview-modal .overflow-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+#preview-modal .overflow-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+#preview-modal .overflow-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#preview-modal .overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Estilos para el botón de modo arrastre */
+#drag-mode-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+#drag-mode-btn:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+#drag-mode-btn:hover:before {
+    left: 100%;
+}
+
+/* Animación para polígonos en modo arrastre */
+.leaflet-interactive.dragging {
+    transition: all 0.2s ease;
+    cursor: move !important;
+}
+
+.leaflet-drag-target {
+    z-index: 1000 !important;
+}
+
+/* Estilos para la pantalla de posicionamiento */
+.positioning-screen button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Pulso sutil para el botón de generar vista previa */
+@keyframes subtlePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.positioning-screen button {
+    animation: subtlePulse 3s ease-in-out infinite;
+}
+
+/* Mejora para tooltips durante el arrastre */
+.leaflet-tooltip.drag-tooltip {
+    background: rgba(37, 99, 235, 0.95) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: white !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Responsividad para el modal */
+@media (max-width: 1024px) {
+    #preview-content {
+        transform: scale(0.6) !important;
+        width: 700px !important;
+        height: 495px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #preview-modal .max-w-6xl {
+        max-width: 95vw;
+    }
+    
+    #preview-content {
+        transform: scale(0.45) !important;
+        width: 600px !important;
+        height: 425px !important;
+    }
+}
+
+/* Pulse animation para elementos cargando */
+.pulse-animate {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ====================================
+   MODAL API GUIDE ESTILOS
+   ==================================== */
+
+/* Modal API Guide */
+#api-guide-modal {
+    backdrop-filter: blur(8px);
+}
+
+#api-guide-content {
+    animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Personalización de colores dinámicos para guías */
+.bg-blue-50 { background-color: #eff6ff; }
+.border-blue-400 { border-color: #60a5fa; }
+.text-blue-800 { color: #1e40af; }
+.bg-blue-100 { background-color: #dbeafe; }
+.text-blue-600 { color: #2563eb; }
+
+.bg-green-50 { background-color: #f0fdf4; }
+.border-green-400 { border-color: #4ade80; }
+.text-green-800 { color: #166534; }
+.bg-green-100 { background-color: #dcfce7; }
+.text-green-600 { color: #16a34a; }
+
+.bg-purple-50 { background-color: #faf5ff; }
+.border-purple-400 { border-color: #a855f7; }
+.text-purple-800 { color: #6b21a8; }
+.bg-purple-100 { background-color: #e9d5ff; }
+.text-purple-600 { color: #9333ea; }
+
+.bg-orange-50 { background-color: #fff7ed; }
+.border-orange-400 { border-color: #fb923c; }  
+.text-orange-800 { color: #9a3412; }
+.bg-orange-100 { background-color: #fed7aa; }
+.text-orange-600 { color: #ea580c; }
+
+/* Scroll personalizado para modal */
+#api-guide-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#api-guide-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+#api-guide-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#api-guide-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

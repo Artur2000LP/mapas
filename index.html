@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVisor Pro - IA + KML/KMZ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100 overflow-hidden relative font-sans text-gray-800">
+
+    <!-- Mapa -->
+    <div id="map"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[3000] space-y-2"></div>
+
+    <!-- Modal IA -->
+    <div id="ai-modal" class="fixed inset-0 bg-black/60 z-[2000] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-95 opacity-0" id="ai-modal-content">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex justify-between items-center text-white shadow-md">
+                <h3 class="font-bold flex items-center gap-2 text-lg"><i class="fa-solid fa-robot"></i> Gemini Geo-Analista</h3>
+                <button onclick="closeModal()" class="hover:bg-white/20 rounded-full p-1.5 w-8 h-8 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <div id="ai-modal-body" class="text-gray-700 text-sm leading-relaxed prose prose-indigo max-w-none"></div>
+            </div>
+            <div class="bg-gray-50 p-3 text-center border-t text-[10px] text-gray-400 font-mono">
+                Powered by Google Gemini 2.5 Flash
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Guía API Keys -->
+    <div id="api-guide-modal" class="fixed inset-0 bg-black/60 z-[2001] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-95 opacity-0" id="api-guide-content">
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 p-4 flex justify-between items-center text-white shadow-md">
+                <h3 class="font-bold flex items-center gap-2 text-lg" id="api-guide-title">
+                    <i class="fa-solid fa-key"></i> Obtener API Key
+                </h3>
+                <button onclick="closeApiGuide()" class="hover:bg-white/20 rounded-full p-1.5 w-8 h-8 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div id="api-guide-body" class="text-gray-700 text-sm leading-relaxed"></div>
+            </div>
+            <div class="bg-gray-50 p-4 border-t flex justify-between items-center">
+                <div class="text-xs text-gray-500">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>
+                    Tu API Key se guarda solo en tu navegador (localStorage)
+                </div>
+                <button onclick="closeApiGuide()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-check mr-1"></i> Entendido
+                </button>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Lateral -->
+    <div class="absolute top-4 left-4 z-[1000] w-96 max-h-[92vh] flex flex-col shadow-2xl rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm border border-white/20 transition-all duration-300 group" id="control-panel">
+        
+        <!-- Header Panel -->
+        <div class="bg-slate-900 text-white p-4 flex justify-between items-center cursor-pointer select-none" onclick="togglePanel()">
+            <div>
+                <h1 class="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                    <i class="fa-solid fa-earth-americas text-indigo-400 mr-2"></i>GeoVisor Pro
+                </h1>
+                <p class="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">IA + KML/KMZ + Mapas Avanzados</p>
+            </div>
+            <i class="fa-solid fa-chevron-up transition-transform duration-300" id="panel-toggle-icon"></i>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-200 bg-gray-50">
+            <button onclick="switchTab('ai')" id="tab-ai" class="flex-1 py-2 px-4 text-sm font-medium text-center hover:bg-white transition-colors border-b-2 border-transparent">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>IA
+            </button>
+            <button onclick="switchTab('kml')" id="tab-kml" class="flex-1 py-2 px-4 text-sm font-medium text-center hover:bg-white transition-colors border-b-2 border-transparent">
+                <i class="fa-solid fa-map-location-dot mr-1"></i>KML/KMZ
+            </button>
+            <button onclick="switchTab('layers')" id="tab-layers" class="flex-1 py-2 px-4 text-sm font-medium text-center hover:bg-white transition-colors border-b-2 border-transparent">
+                <i class="fa-solid fa-layer-group mr-1"></i>Capas
+            </button>
+        </div>
+
+        <!-- Contenido Scroll -->
+        <div class="overflow-y-auto flex-1" id="panel-content">
+            
+            <!-- TAB 1: MÓDULO IA -->
+            <div id="content-ai" class="tab-content">
+                <div class="p-5 bg-gradient-to-b from-indigo-50/80 to-white">
+                    <h2 class="text-xs font-bold text-indigo-800 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i> Generador Inteligente
+                    </h2>
+                    <div class="relative">
+                        <textarea id="aiPrompt" rows="2" 
+                            class="w-full p-3 pr-10 border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none resize-none bg-white shadow-sm transition-all placeholder-indigo-300"
+                            placeholder="Ej: Volcanes activos en Arequipa..."></textarea>
+                        <button onclick="generateMapWithAI()" id="btn-generate-ai" class="absolute bottom-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg p-1.5 w-8 h-8 flex items-center justify-center shadow transition-transform active:scale-90">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Datos Manuales -->
+                <div class="p-5 bg-white border-t border-gray-100">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Gestor de Datos</h2>
+                    <textarea id="coordinateInput" rows="3" 
+                        class="w-full p-2 border border-gray-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-gray-400 focus:outline-none mb-2 bg-gray-50"
+                        placeholder="Nombre, Latitud, Longitud"></textarea>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="processData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-bold transition-colors shadow-md">
+                            <i class="fa-solid fa-map-pin mr-1"></i> Graficar
+                        </button>
+                        <button onclick="clearMap()" class="px-3 bg-white hover:bg-red-50 text-red-500 border border-red-200 rounded-lg text-xs font-bold transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 flex justify-between text-[10px] text-gray-400 font-mono">
+                        <span>Puntos: <strong id="point-counter" class="text-slate-700">0</strong></span>
+                        <span>Zoom: <strong id="zoom-level" class="text-slate-700">5</strong></span>
+                    </div>
+                    <button onclick="document.querySelectorAll('.toast-notification').forEach(t => t.remove())" class="mt-2 text-[10px] text-gray-500 hover:text-gray-700 w-full text-center">
+                        Limpiar notificaciones ×
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 2: VISOR KML/KMZ -->
+            <div id="content-kml" class="tab-content hidden">
+                <!-- Búsqueda de lugares -->
+                <div class="p-5 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-cyan-50">
+                    <h3 class="text-xs font-bold text-teal-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass text-teal-600"></i> Buscar Lugares
+                    </h3>
+                    <div class="relative">
+                        <input id="place-search" type="text" 
+                               placeholder="Buscar calles, lugares, ciudades..." 
+                               class="w-full p-2 pl-9 pr-4 border border-teal-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-teal-400 text-xs"></i>
+                        <!-- Resultados de búsqueda -->
+                        <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                            <!-- Los resultados se cargan aquí dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload de archivos -->
+                <div class="p-5 border-b border-gray-100">
+                    <label class="relative cursor-pointer w-full block">
+                        <input id="kml-file-input" type="file" accept=".kml,.kmz" multiple class="hidden">
+                        <span class="flex items-center justify-center gap-2 px-4 py-3 w-full bg-orange-500 hover:bg-orange-600 cursor-pointer text-white rounded-lg transition-colors shadow-sm font-medium">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>Cargar KML/KMZ</span>
+                        </span>
+                    </label>
+
+                    <!-- Progress bar para carga -->
+                    <div id="kml-upload-progress" class="hidden mt-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-600" id="progress-text">Procesando archivos...</span>
+                            <span class="text-xs text-gray-500" id="progress-count">0/0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="progress-bar h-2 rounded-full" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Información de archivos cargados -->
+                    <div id="kml-files-info" class="hidden mt-3">
+                        <div class="flex justify-between items-center text-xs text-gray-600 mb-2">
+                            <span>Archivos cargados: <strong id="files-count">0</strong></span>
+                            <button onclick="clearAllKMLFiles()" class="text-red-500 hover:text-red-700 font-medium">Limpiar todo</button>
+                        </div>
+                        <!-- Botón Exportar PDF -->
+                        <button onclick="exportToPDF()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span>Exportar Plano A3 (PDF)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de archivos KML/KMZ -->
+                <div id="kml-files-container" class="flex-1 overflow-y-auto">
+                    <!-- Los archivos se agregan dinámicamente aquí -->
+                </div>
+            </div>
+
+            <!-- TAB 3: CAPAS BASE -->
+            <div id="content-layers" class="tab-content hidden">
+                <div class="bg-gray-50 p-3 border-b border-gray-200">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Proveedores de Mapas</h2>
+                </div>
+
+                <!-- ACORDEÓN 1: ESRI (Gratis & Pro) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('esri')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700"><i class="fa-solid fa-globe"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Esri ArcGIS</span>
+                                <span class="block text-[10px] text-green-600 font-semibold">Gratuito • Calidad Pro</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-esri" class="provider-options bg-gray-50/50">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-green-50 cursor-pointer transition-all group/item bg-green-50/50">
+                                <input type="radio" name="basemap" value="esriSat" checked class="text-green-600 focus:ring-green-500" onchange="changeLayer('esri', 'sat')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900 font-medium">Satélite (World Imagery)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-white cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="esriTopo" class="text-green-600 focus:ring-green-500" onchange="changeLayer('esri', 'topo')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Topográfico (World Topo)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-white cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="esriStreet" class="text-green-600 focus:ring-green-500" onchange="changeLayer('esri', 'street')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Calles (Streets)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-white cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="esriNatGeo" class="text-green-600 focus:ring-green-500" onchange="changeLayer('esri', 'natgeo')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">National Geographic</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-white cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="esriDark" class="text-green-600 focus:ring-green-500" onchange="changeLayer('esri', 'dark')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Gris Oscuro (Dark Gray)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 3: GOOGLE MAPS (Gratuito) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('google')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-700"><i class="fa-brands fa-google"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Google Maps</span>
+                                <span class="block text-[10px] text-red-600 font-semibold">Gratuito • Mundial</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-google" class="provider-options bg-red-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-red-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="googleRoadmap" class="text-red-600 focus:ring-red-500" onchange="changeLayer('google', 'roadmap')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Roadmap (Calles)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-red-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="googleSat" class="text-red-600 focus:ring-red-500" onchange="changeLayer('google', 'satellite')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Satélite</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-red-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="googleHybrid" class="text-red-600 focus:ring-red-500" onchange="changeLayer('google', 'hybrid')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Híbrido (Satélite + Calles)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-red-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="googleTerrain" class="text-red-600 focus:ring-red-500" onchange="changeLayer('google', 'terrain')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Terreno</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 4: BING MAPS (Microsoft - Gratuito) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('bing')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700"><i class="fa-brands fa-microsoft"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Bing Maps</span>
+                                <span class="block text-[10px] text-cyan-600 font-semibold">Gratuito • Microsoft</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-bing" class="provider-options bg-cyan-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-cyan-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="bingRoad" class="text-cyan-600 focus:ring-cyan-500" onchange="changeLayer('bing', 'road')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Road (Calles)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-cyan-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="bingAerial" class="text-cyan-600 focus:ring-cyan-500" onchange="changeLayer('bing', 'aerial')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Aerial (Aéreo)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 10: OPEN SOURCE (OSM, Carto, etc) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors active" onclick="toggleProvider('open')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-700"><i class="fa-solid fa-users-viewfinder"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Open Source</span>
+                                <span class="block text-[10px] text-orange-600 font-semibold">Comunidad Global</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-open" class="provider-options open">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="osm" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'osm')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">OpenStreetMap (Estándar)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="opentopo" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'opentopo')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">OpenTopoMap (Relieve)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="cartoDark" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'cartoDark')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">CartoDB Dark Matter</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="cartoLight" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'cartoLight')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">CartoDB Positron (Light)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="cartoVoyager" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'cartoVoyager')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">CartoDB Voyager</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="wikimedia" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'wikimedia')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Wikimedia Maps</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="osmHot" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'osmHot')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">OSM Humanitarian</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="cyclOSM" class="text-orange-600 focus:ring-orange-500" onchange="changeLayer('open', 'cyclOSM')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">CyclOSM (Ciclismo)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 8: NASA GIBS (Científicos - Experimental) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors opacity-60" onclick="toggleProvider('nasa')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700"><i class="fa-solid fa-satellite"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">NASA GIBS</span>
+                                <span class="block text-[10px] text-yellow-600 font-semibold">Experimental • Inestable</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-nasa" class="provider-options bg-indigo-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <div class="text-xs text-yellow-700 mb-2 p-2 bg-yellow-50 rounded border">
+                                ⚠️ Mapas experimentales que pueden fallar
+                            </div>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-all group/item opacity-70">
+                                <input type="radio" name="basemap" value="nasaViirs" class="text-indigo-600 focus:ring-indigo-500" onchange="changeLayer('nasa', 'viirs')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">VIIRS Day/Night</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-all group/item opacity-70">
+                                <input type="radio" name="basemap" value="nasaModis" class="text-indigo-600 focus:ring-indigo-500" onchange="changeLayer('nasa', 'modis')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">MODIS True Color</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 2: MAPBOX (Token Requerido) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors opacity-60 grayscale" id="header-mapbox" onclick="toggleProvider('mapbox')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700"><i class="fa-solid fa-layer-group"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Mapbox</span>
+                                <span class="block text-[10px] text-blue-600 font-semibold" id="mapbox-subtitle">Requiere Token</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-lock arrow text-gray-400 text-xs transition-transform" id="mapbox-lock-icon"></i>
+                    </div>
+                    <div id="opts-mapbox" class="provider-options bg-blue-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxSat" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'satellite-v9')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Satélite</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxSatStr" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'satellite-streets-v11')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Satélite + Calles (Híbrido)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxStr" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'streets-v11')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Streets (Vectorial)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxDark" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'dark-v10')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Dark Mode</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxLight" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'light-v10')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Light Mode</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="mapboxOut" class="text-blue-600 focus:ring-blue-500" onchange="changeLayer('mapbox', 'outdoors-v11')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Outdoors (Senderismo)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 6: HERE MAPS (Requiere API Key) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors opacity-60 grayscale" id="header-here" onclick="toggleProvider('here')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Here Maps</span>
+                                <span class="block text-[10px] text-purple-600 font-semibold" id="here-subtitle">Requiere API Key</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-lock arrow text-gray-400 text-xs transition-transform" id="here-lock-icon"></i>
+                    </div>
+                    <div id="opts-here" class="provider-options bg-purple-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="hereNormal" class="text-purple-600 focus:ring-purple-500" onchange="changeLayer('here', 'normal')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Normal Day</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="hereSat" class="text-purple-600 focus:ring-purple-500" onchange="changeLayer('here', 'satellite')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Satellite Day</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="hereHybrid" class="text-purple-600 focus:ring-purple-500" onchange="changeLayer('here', 'hybrid')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Hybrid Day</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 7: STAMEN MAPS (Requiere API Key) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors opacity-60 grayscale" id="header-stamen" onclick="toggleProvider('stamen')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-700"><i class="fa-solid fa-palette"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Stamen Design</span>
+                                <span class="block text-[10px] text-pink-600 font-semibold" id="stamen-subtitle">Requiere API Key</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-lock arrow text-gray-400 text-xs transition-transform" id="stamen-lock-icon"></i>
+                    </div>
+                    <div id="opts-stamen" class="provider-options bg-pink-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-pink-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="stamenWater" class="text-pink-600 focus:ring-pink-500" onchange="changeLayer('stamen', 'watercolor')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Watercolor (Acuarela)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-pink-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="stamenTerrain" class="text-pink-600 focus:ring-pink-500" onchange="changeLayer('stamen', 'terrain')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Terrain (Relieve)</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-pink-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="stamenToner" class="text-pink-600 focus:ring-pink-500" onchange="changeLayer('stamen', 'toner')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Toner (Blanco y Negro)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN 9: THUNDERFOREST (Requiere API Key) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors opacity-60 grayscale" id="header-thunderforest" onclick="toggleProvider('thunderforest')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700"><i class="fa-solid fa-mountain-sun"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Thunderforest</span>
+                                <span class="block text-[10px] text-teal-600 font-semibold" id="thunderforest-subtitle">Requiere API Key</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-lock arrow text-gray-400 text-xs transition-transform" id="thunderforest-lock-icon"></i>
+                    </div>
+                    <div id="opts-thunderforest" class="provider-options bg-teal-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-teal-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="thunderLandscape" class="text-teal-600 focus:ring-teal-500" onchange="changeLayer('thunderforest', 'landscape')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Landscape</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-teal-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="thunderOutdoors" class="text-teal-600 focus:ring-teal-500" onchange="changeLayer('thunderforest', 'outdoors')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Outdoors</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-teal-50 cursor-pointer transition-all group/item">
+                                <input type="radio" name="basemap" value="thunderCycle" class="text-teal-600 focus:ring-teal-500" onchange="changeLayer('thunderforest', 'cycle')">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Cycle Map</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- jsPDF para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas para capturar el mapa -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
