@@ -90,7 +90,10 @@
                 <i class="fa-solid fa-map-location-dot mr-1"></i>KML/KMZ
             </button>
             <button onclick="switchTab('layers')" id="tab-layers" class="flex-1 py-2 px-4 text-sm font-medium text-center hover:bg-white transition-colors border-b-2 border-transparent">
-                <i class="fa-solid fa-layer-group mr-1"></i>Capas
+                <i class="fa-solid fa-layer-group mr-1"></i>Capas de Mapas
+            </button>
+            <button onclick="switchTab('peru')" id="tab-peru" class="flex-1 py-2 px-4 text-sm font-medium text-center hover:bg-white transition-colors border-b-2 border-transparent">
+                <i class="fa-solid fa-flag mr-1"></i>Capas Perú
             </button>
         </div>
 
@@ -204,6 +207,20 @@
                     <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Proveedores de Mapas</h2>
                 </div>
 
+                <!-- OPCIÓN: SIN FONDO (Mapa Limpio) -->
+                <div class="border-b border-gray-100 bg-white">
+                    <div class="flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors group" 
+                         onclick="toggleBaseMap()">
+                        <div class="flex items-center gap-3 ml-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-red-100 group-hover:text-red-500 transition-colors"><i class="fa-solid fa-eye-slash"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Quitar Fondo (Mapa Limpio)</span>
+                                <span class="block text-[10px] text-gray-500 font-semibold">Ocultar mapa base actual</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ACORDEÓN 1: ESRI (Gratis & Pro) -->
                 <div class="border-b border-gray-100">
                     <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('esri')">
@@ -301,6 +318,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <!-- ACORDEÓN 10: OPEN SOURCE (OSM, Carto, etc) -->
                 <div class="border-b border-gray-100">
@@ -513,17 +531,158 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB 4: CAPAS PERÚ -->
+            <div id="content-peru" class="tab-content hidden">
+                <div class="bg-red-50 p-3 border-b border-red-200">
+                    <h2 class="text-xs font-bold text-red-700 uppercase tracking-wider mb-2">Mapas del Perú</h2>
+                </div>
+
+                <!-- ACORDEÓN 5: GEOPERÚ (WMS) -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('geoperu')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-700"><i class="fa-solid fa-map-location-dot"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">Mapas del Perú (GeoPerú)</span>
+                                <span class="block text-[10px] text-red-600 font-semibold">Gratuito • Oficial WMS</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-geoperu" class="provider-options bg-red-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-red-50 cursor-pointer transition-all group/item">
+                                <input type="checkbox" id="overlay-departamentos" class="text-red-600 focus:ring-red-500" onchange="toggleOverlay('geoperu', 'departamentos', this.checked)">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Límite Departamental</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACORDEÓN: INGEMMET — Cartas Topográficas IGN -->
+                <div class="border-b border-gray-100">
+                    <div class="provider-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleProvider('ingemmet')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700"><i class="fa-solid fa-mountain"></i></div>
+                            <div>
+                                <span class="block text-sm font-bold text-gray-800">INGEMMET / IGN</span>
+                                <span class="block text-[10px] text-amber-600 font-semibold">Gratuito • Cartas Topográficas</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down arrow text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="opts-ingemmet" class="provider-options bg-amber-50/30">
+                        <div class="p-3 space-y-1 pl-14">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-amber-50 cursor-pointer transition-all group/item">
+                                <input type="checkbox" id="overlay-cartas-ign" class="text-amber-600 focus:ring-amber-500" onchange="toggleIngemmetOverlay('cartasIGN', this.checked)">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">Cartas Topográficas IGN</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-amber-50 cursor-pointer transition-all group/item">
+                                <input type="checkbox" id="overlay-cuadrantes" class="text-amber-600 focus:ring-amber-500" onchange="toggleCuadrantesGrid(this.checked)">
+                                <span class="ml-2 text-xs text-gray-600 group-hover/item:text-gray-900">
+                                    Cuadrantes IGN
+                                    <span class="ml-1 bg-amber-100 text-amber-700 text-[9px] px-1 py-0.5 rounded font-semibold">1:100K</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- ── CONTROLES DE APARIENCIA ── -->
+                        <div id="ingemmet-controls" class="px-4 pb-4 space-y-3 border-t border-amber-100 pt-3">
+
+                            <!-- 1. TRANSPARENCIA -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">
+                                        <i class="fa-solid fa-circle-half-stroke mr-1"></i>Transparencia
+                                    </span>
+                                    <span id="ingemmet-opacity-label" class="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">90%</span>
+                                </div>
+                                <input type="range" id="ingemmet-opacity-slider"
+                                       min="0" max="100" value="90"
+                                       class="w-full h-1.5 rounded-full accent-amber-600 cursor-pointer"
+                                       oninput="setIngemmetOpacity(this.value)">
+                                <div class="flex justify-between text-[9px] text-gray-400 mt-0.5">
+                                    <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+                                </div>
+                            </div>
+
+                            <!-- 2. MODO COMBINACIÓN (Blend Mode) -->
+                            <div>
+                                <div class="flex items-center mb-1 gap-1">
+                                    <i class="fa-solid fa-layer-group text-amber-600 text-[10px]"></i>
+                                    <span class="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Combinando</span>
+                                </div>
+                                <select id="ingemmet-blend-select"
+                                        class="w-full text-xs border border-amber-200 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none text-gray-700"
+                                        onchange="setIngemmetBlend(this.value)">
+                                    <option value="normal">Normal</option>
+                                    <option value="multiply">Multiplicar</option>
+                                    <option value="screen">Pantalla</option>
+                                    <option value="overlay">Superponer</option>
+                                    <option value="darken">Oscurecer</option>
+                                    <option value="lighten">Aclarar</option>
+                                    <option value="color-dodge">Sobreexponer color</option>
+                                    <option value="color-burn">Subexponer color</option>
+                                    <option value="hard-light">Luz fuerte</option>
+                                    <option value="soft-light">Luz suave</option>
+                                </select>
+                            </div>
+
+                            <!-- 3. RANGO VISIBLE (Zoom mín / máx) -->
+                            <div>
+                                <div class="flex items-center mb-2 gap-1">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-amber-600 text-[10px]"></i>
+                                    <span class="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Rango visible</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 w-8">Mín</span>
+                                        <input type="range" id="ingemmet-minzoom" min="1" max="18" value="8"
+                                               class="flex-1 h-1.5 rounded-full accent-amber-600 cursor-pointer"
+                                               oninput="setIngemmetZoomRange()">
+                                        <span id="ingemmet-minzoom-label" class="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded w-6 text-center">8</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 w-8">Máx</span>
+                                        <input type="range" id="ingemmet-maxzoom" min="1" max="18" value="18"
+                                               class="flex-1 h-1.5 rounded-full accent-amber-600 cursor-pointer"
+                                               oninput="setIngemmetZoomRange()">
+                                        <span id="ingemmet-maxzoom-label" class="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded w-6 text-center">18</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-[9px] text-gray-400 mt-1">
+                                    <span>🌍 Mundial</span><span>🏙️ Ciudad</span><span>🏠 Habitación</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenedor dinámico para Capas Oficiales WMS/REST -->
+                <div id="official-layers-container"></div>
+
+            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts CDN -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- jsPDF para generar PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- html2canvas para capturar el mapa -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="app.js"></script>
+
+    <!-- Módulos GeoVisor Pro (orden de dependencias) -->
+    <script src="js/config.js"></script>      <!-- Constantes, providers, variables globales -->
+    <script src="js/ui.js"></script>          <!-- Panel, tabs, acordeones, toasts -->
+    <script src="js/credentials.js"></script> <!-- Tokens, API keys, guías -->
+    <script src="js/map.js"></script>         <!-- Leaflet, cambio de capas, marcadores -->
+    <script src="js/overlays.js"></script>    <!-- GeoPerú WMS + INGEMMET ArcGIS -->
+    <script src="js/search.js"></script>      <!-- Búsqueda de lugares (Nominatim) -->
+    <script src="js/kml.js"></script>         <!-- KML/KMZ carga, parseo y visualización -->
+    <script src="js/ai.js"></script>          <!-- Gemini AI integración -->
+    <script src="js/app.js"></script>         <!-- Punto de entrada — inicialización -->
 </body>
-</html>
+</html>

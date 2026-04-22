@@ -1,139 +1,100 @@
-# 🗺️ GeoVisor Pro
+Refactoring: GeoVisor Pro — Estructura Modular
+Dividir app.js (109 KB, ~2600 líneas) y index.html (45 KB, ~570 líneas) en módulos independientes y mantenibles.
 
-> **Visualizador de mapas inteligente con IA integrada**  
-> Análisis de archivos KML/KMZ usando Google Gemini AI + mapas interactivos con Leaflet
+Propuesta de Estructura
+mapas/
+├── index.html              → Solo estructura HTML limpia (~150 líneas)
+├── styles.css              → Ya existe — se amplía
+├── js/
+│   ├── config.js           → Providers, URLs, constantes globales
+│   ├── map.js              → Inicialización del mapa + cambio de capa base
+│   ├── overlays.js         → GeoPerú WMS + INGEMMET ArcGIS (imagen única)
+│   ├── kml.js              → Carga, parseo y visualización de KML/KMZ
+│   ├── ai.js               → Integración con Gemini AI
+│   ├── search.js           → Búsqueda de lugares (Nominatim)
+│   ├── credentials.js      → Gestión de tokens (Mapbox, Here, Thunderforest)
+│   ├── ui.js               → Panel, tabs, acordeones, toasts
+│   └── app.js              → Punto de entrada — inicialización y conexión de módulos
+└── README.md
+Módulos: Contenido Detallado
+js/config.js
+providers — URLs de todos los mapas base
+attributions — Atribuciones de cada proveedor
+providerConfigs — Configs de API keys (Mapbox, Here, Thunderforest, Stadia)
+GEOPERU_WMS — URL base GeoPerú
+INGEMMET_CARTA_URL — URL base INGEMMET
+PERU_DEPTS — Centroides hardcodeados (fallback)
+js/map.js
+initMap() — Crea instancia Leaflet, controles de zoom
+changeLayer(provider, style) — Cambia mapa base
+reloadTiles(), toggleTileQuality() — Calidad de tiles
+processData(), clearMap() — Gestión de marcadores manuales
+js/overlays.js
+buildGeoPeruImageUrl(layer) — Constructor de URL WMS
+buildIngemmetImageUrl(layersParam) — Constructor de URL ArcGIS
+toggleOverlay(provider, styleKey, isChecked) — GeoPerú imagen dinámica
+toggleIngemmetOverlay(layerId, isChecked) — INGEMMET imagen dinámica
+js/kml.js
+handleKMLUpload(event) — Carga de archivos
+addKMLToMap(kmlFile) — Parseo y renderizado
+addKMLFileToUI(kmlFile) — UI de la lista de archivos
+toggleKMLVisibility(), removeKMLFile(), clearAllKMLFiles()
+cleanKMLContent(), analyzeKML() — Limpieza y análisis
+js/ai.js
+generateMapWithAI() — Genera CSV de puntos con Gemini
+analyzeLocationAI(name, lat, lon) — Analiza una ubicación
+closeModal() — Modal IA
+js/search.js
+setupPlaceSearch() — Configurar búsqueda de Nominatim
+displaySearchResults(), goToPlace(), clearSearchMarker()
+js/credentials.js
+createCredentialInput(), getCredentialValue()
+saveCredential(), validateCredential()
+updateProviderHeader(), showApiKeyGuide()
+js/ui.js
+switchTab(), togglePanel()
+toggleProvider() — Acordeones del panel
+showToast() — Notificaciones
+Funciones de utilidad: hexToRgb(), formatFileSize(), etc.
+js/app.js (punto de entrada)
+DOMContentLoaded → llama a initMap(), setupPlaceSearch(), setupMapboxTokenListener(), etc.
+Variables globales compartidas: map, currentTileLayer, activeOverlays, kmlFiles
+index.html — Después del Refactoring
+Solo contendrá:
 
-![GitHub](https://img.shields.io/badge/License-MIT-blue.svg)
-![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)
-![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green.svg)
-![AI](https://img.shields.io/badge/AI-Google%20Gemini-red.svg)
+<head> con CDN imports
+Estructura HTML del panel lateral (sin estilos inline)
+<script> tags cargando los módulos JS en orden correcto
+Orden de Carga de Scripts
+html
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/credentials.js"></script>
+<script src="js/map.js"></script>
+<script src="js/overlays.js"></script>
+<script src="js/search.js"></script>
+<script src="js/kml.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+Plan de Ejecución
+Crear carpeta js/
+Crear js/config.js — extraer todas las constantes
+Crear js/ui.js — panel, tabs, toasts
+Crear js/credentials.js — tokens y API keys
+Crear js/map.js — mapa base + marcadores
+Crear js/overlays.js — GeoPerú + INGEMMET
+Crear js/search.js — búsqueda de lugares
+Crear js/kml.js — carga y visualización KML
+Crear js/ai.js — integración Gemini
+Crear js/app.js — punto de entrada
+Limpiar index.html — eliminar app.js viejo, cargar módulos
+IMPORTANT
 
-## ✨ Características
+El orden de los scripts importa: config.js debe ir primero (variables globales), app.js al final (inicialización).
 
-🤖 **IA Integrada**  
-- Análisis automático de archivos KML/KMZ  
-- Extracción inteligente de información geoespacial  
-- Respuestas en lenguaje natural  
+WARNING
 
-🗺️ **Múltiples Proveedores**  
-- Esri ArcGIS (Satélite, Topográfico, Calles)  
-- Google Maps (Roadmap, Satélite, Híbrido, Terreno)  
-- OpenStreetMap, CartoDB, Bing Maps  
-- NASA GIBS, Stamen Design  
+Variables como map, currentTileLayer, kmlFiles son compartidas entre módulos. Se declararán como let en config.js o app.js y serán accesibles globalmente (sin ES modules para mantener compatibilidad con el sistema actual de carga de scripts).
 
-⚡ **Funcionalidades**  
-- Carga y visualización de archivos KML/KMZ  
-- Análisis de datos con IA  
-- Interfaz moderna y responsiva  
-- Múltiples capas de mapa  
-
-## 🚀 Inicio Rápido
-
-1. **Clonar repositorio**
-   ```bash
-   git clone <tu-repo-url>
-   cd mapas-ejemplos-maps
-   ```
-
-2. **Configurar API Key**
-   ```javascript
-   // En app.js, línea 7
-   const CONFIG = {
-       apiKey: "TU_GOOGLE_GEMINI_API_KEY", // ← Agregar aquí
-       // ...
-   };
-   ```
-
-3. **Abrir en navegador**
-   ```bash
-   # Servir con servidor local
-   python -m http.server 8000
-   # o
-   npx serve .
-   ```
-
-4. **Acceder**: `http://localhost:8000`
-
-## 🎯 Uso
-
-### Análisis con IA
-1. Sube un archivo KML/KMZ
-2. Haz preguntas en lenguaje natural
-3. Obtén análisis inteligente de tus datos
-
-### Visualización de Mapas
-- **Cambio de capa**: Usa el panel de capas
-- **Zoom**: Rueda del mouse o controles
-- **Navegación**: Clic y arrastrar
-
-## 📁 Estructura del Proyecto
-
-```
-📦 GeoVisor Pro
-├── 📄 index.html          # Aplicación principal
-├── 📄 mapejemplo.html     # Ejemplo básico
-├── 📄 mapanasa.html       # Ejemplo NASA
-├── 🎨 styles.css          # Estilos personalizados
-├── ⚙️ app.js              # Lógica principal
-├── 🧪 test-mapas.js       # Pruebas de mapas
-└── 📚 MAPAS_GUIA.md       # Guía de mapas
-```
-
-## 🛠️ Tecnologías
-
-| Tecnología | Uso | Versión |
-|------------|-----|---------|
-| **Leaflet** | Mapas interactivos | 1.9.4 |
-| **Tailwind CSS** | Estilos | CDN |
-| **Google Gemini** | Análisis IA | API |
-| **Font Awesome** | Iconografía | 6.4.0 |
-
-## 🌍 Proveedores Soportados
-
-<table>
-<tr>
-<td>🛰️ <strong>Esri ArcGIS</strong><br>Mapas de alta calidad</td>
-<td>🌍 <strong>Google Maps</strong><br>Cobertura mundial</td>
-</tr>
-<tr>
-<td>🆓 <strong>OpenStreetMap</strong><br>Datos comunitarios</td>
-<td>🎨 <strong>Stamen & CartoDB</strong><br>Estilos artísticos</td>
-</tr>
-</table>
-
-## 📝 Configuración Avanzada
-
-### Variables de Configuración
-```javascript
-const CONFIG = {
-    apiKey: "",                    // Google Gemini API Key
-    defaultCenter: [-9.189967, -75.015152], // Centro inicial
-    defaultZoom: 5,               // Zoom inicial
-    colorPalette: [...],          // Paleta de colores
-};
-```
-
-## 🤝 Contribuir
-
-1. **Fork** el repositorio
-2. **Crea** una rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. **Commit** tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
-5. **Abre** un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
-
-## 🔗 Enlaces
-
-- [Demo en vivo](#) <!-- Agregar URL cuando esté disponible -->
-- [Documentación de Leaflet](https://leafletjs.com/)
-- [API Google Gemini](https://ai.google.dev/)
-
----
-
-<div align="center">
-  <strong>🌟 Si te gusta este proyecto, dale una estrella</strong><br>
-  <sub>Hecho con ❤️ para la comunidad geoespacial</sub>
-</div>
+Verificación
+Cargar index.html y probar: cambio de mapa base, carga KML, capas GeoPerú/INGEMMET, búsqueda de lugares, IA
